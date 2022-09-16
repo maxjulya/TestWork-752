@@ -31,6 +31,7 @@ function wp8c_load_assets(){
 add_action('admin_enqueue_scripts', 'wp8c_load_assets');
 
 
+
 // Метабокс загрузки картинок
 if(1){
     class_exists('Kama_Post_Meta_Box') && new Kama_Post_Meta_Box( array(
