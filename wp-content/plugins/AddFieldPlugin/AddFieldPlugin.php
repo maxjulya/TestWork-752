@@ -15,60 +15,67 @@
  */
 
 
-function mercury_scripts(){
+function mercury_scripts()
+{
 
 }
 
-function wp8c_register_scripts(){
+function wp8c_register_scripts()
+{
     wp_register_script('wp8c_scripts', plugins_url('assets/js/admin.js', __FILE__));
 }
+
 add_action('admin_enqueue_scripts', 'wp8c_register_scripts');
 
-function wp8c_load_assets(){
+function wp8c_load_assets()
+{
     wp_enqueue_script('wp8c_scripts');
 //    wp_enqueue_style('mercury-media', get_theme_file_uri('/css/media.css'), array(), '3.3.1');
 }
+
 add_action('admin_enqueue_scripts', 'wp8c_load_assets');
 
 
 
 // Метабокс загрузки картинок
-if(1){
-    class_exists('Kama_Post_Meta_Box') && new Kama_Post_Meta_Box( array(
-        'id'         => '_qimages',
-        'title'      => 'Загрузка картинок и выбор основной',
-        'post_type'  => 'product',
-        'fields'     => array(
-            '_thumbnail_id' => array('callback' => '_qimages_callback' ),
+if (1) {
+    class_exists('Kama_Post_Meta_Box') && new Kama_Post_Meta_Box(array(
+        'id' => '_qimages',
+        'title' => 'Загрузка картинок и выбор основной',
+        'post_type' => 'product',
+        'fields' => array(
+            '_thumbnail_id' => array('callback' => '_qimages_callback'),
         ),
-    ) );
+    ));
 
     // выводит все картинки и кнопку
-    function _qimages_callback( $args, $post, $name, $val ){
+    function _qimages_callback($args, $post, $name, $val)
+    {
         echo '
 		<div class="wp-media-buttons" style="padding:4em 1em 1em 0; __float:none;">
-			<button type="button" id="qimages__add" class="button add_media" data-post_id="'. $post->ID .'" data-attr_name="'. $name .'"><span class="wp-media-buttons-icon"></span> Добавить/удалить картинку</button>
+			<button type="button" id="qimages__add" class="button add_media" data-post_id="' . $post->ID . '" data-attr_name="' . $name . '"><span class="wp-media-buttons-icon"></span> Добавить/удалить картинку</button>
 		</div>';
 
-        echo ___qimages_callback_images( $post->ID, $name, $val );
+        echo ___qimages_callback_images($post->ID, $name, $val);
 
-        if( ! defined('DOING_AJAX') )
+        if (!defined('DOING_AJAX'))
             add_action('admin_print_footer_scripts', '__qimages_callback_js');
     }
 
-    function ___qimages_callback_images( $post_id, $name, $val ){
+    function ___qimages_callback_images($post_id, $name, $val)
+    {
         $out = '';
         $out .= '<span class="images__wrap">';
 
-        $images = get_children([ 'post_parent' => $post_id ]);
-        if( ! $images )
+        $images = get_children(['post_parent' => $post_id]);
+        if (!$images)
             $out .= 'Картинок нет';
         else
-            foreach( $images as $img ){
+            foreach ($images as $img) {
                 $out .= '
 				<label style="text-align:center; float:left; margin-right:.5em;">
-					<input type="radio" name="'. esc_attr($name) .'" value="'. $img->ID .'" '. checked($img->ID, $val, 0) .'><br>
-					<img src="'. wp_get_attachment_image_url( $img->ID, 'thumbnail' ) .'" width="100" height="100" alt="">
+					<input type="radio" name="' . esc_attr($name) . '" value="' . $img->ID . '" ' . checked($img->ID, $val, 0) . '><br>
+					<img src="' . wp_get_attachment_image_url($img->ID, 'thumbnail') . '" width="100" height="100" alt="">
 				</label>';
             }
 
@@ -77,13 +84,14 @@ if(1){
         return $out;
     }
 
-    function __qimages_callback_js(){
+    function __qimages_callback_js()
+    {
         ?>
         <script>
-            jQuery(document).ready(function($){
+            jQuery(document).ready(function ($) {
                 var frame;
 
-                $('#qimages__add').click( function( event ) {
+                $('#qimages__add').click(function (event) {
                     event.preventDefault();
 
                     var $el = $(this),
@@ -91,16 +99,19 @@ if(1){
                         post_id = $el.data('post_id'),
                         $imgs_cont = $el.closest('.inside').find('.images__wrap');
 
-                    if( frame ){  frame.open();  return;  }
+                    if (frame) {
+                        frame.open();
+                        return;
+                    }
 
                     // Create the media frame.
                     frame = wp.media.frames.questImgAdd = wp.media({
                         states: [
                             new wp.media.controller.Library({
-                                title:     'Загрузка изображений квеста',
-                                library:   wp.media.query({ type: 'image', post_parent: post_id }),
-                                multiple:  false,
-                                date:      false
+                                title: 'Загрузка изображений квеста',
+                                library: wp.media.query({type: 'image', post_parent: post_id}),
+                                multiple: false,
+                                date: false
                             })
                         ],
 
@@ -110,14 +121,14 @@ if(1){
                         }
                     });
 
-                    var selectClose_func = function(){
+                    var selectClose_func = function () {
                         var $checked_radio = $imgs_cont.find('input[type=radio]:checked'),
                             attach_id = $checked_radio.length ? $checked_radio.val() : 0;
 
                         // если это выбор из окна
-                        if( this.toString() === 'select' ){
-                            var selected = frame.state().get( 'selection' ).first();
-                            if( selected )  attach_id = selected.id;
+                        if (this.toString() === 'select') {
+                            var selected = frame.state().get('selection').first();
+                            if (selected) attach_id = selected.id;
                         }
 
                         var data = {
@@ -129,21 +140,21 @@ if(1){
                         //console.log( data );
                         // AJAX
                         $imgs_cont.html('Обновляю...');
-                        $.post( ajaxurl, data, function(resp) {
-                            if( resp !== '' ){
-                                $imgs_cont.html( resp );
+                        $.post(ajaxurl, data, function (resp) {
+                            if (resp !== '') {
+                                $imgs_cont.html(resp);
                             }
                         });
                     };
 
-                    frame.on('select', selectClose_func, 'select' );
-                    frame.on('close', selectClose_func, 'close' );
+                    frame.on('select', selectClose_func, 'select');
+                    frame.on('close', selectClose_func, 'close');
 
                     // set selected
-                    frame.on('open', function(){
+                    frame.on('open', function () {
                         var $checked = $imgs_cont.find('input[type=radio]:checked');
-                        if( $checked.length )
-                            frame.state().get('selection').add( wp.media.attachment($checked.val()) );
+                        if ($checked.length)
+                            frame.state().get('selection').add(wp.media.attachment($checked.val()));
                     });
 
                     frame.open();
@@ -154,23 +165,23 @@ if(1){
         <?php
     }
 
-    if( defined('DOING_AJAX') && DOING_AJAX ){
+    if (defined('DOING_AJAX') && DOING_AJAX) {
         add_action('wp_ajax_refresh_quest_images', 'ajax_refresh_quest_images_cb');
 
-        function ajax_refresh_quest_images_cb(){
-            $post_id = (int) $_POST['post_id'];
-            $name    = $_POST['attr_name'];
-            $val     = (int) $_POST['attach_id'];
+        function ajax_refresh_quest_images_cb()
+        {
+            $post_id = (int)$_POST['post_id'];
+            $name = $_POST['attr_name'];
+            $val = (int)$_POST['attach_id'];
 
-            if( ! current_user_can('edit_post', $post_id ) ) die;
+            if (!current_user_can('edit_post', $post_id)) die;
 
-            echo ___qimages_callback_images( $post_id, $name, $val );
+            echo ___qimages_callback_images($post_id, $name, $val);
 
             die;
         }
     }
 }
-
 
 
 add_action('admin_enqueue_scripts', 'true_include_myuploadscript');
@@ -191,7 +202,7 @@ function true_image_uploader_field($args)
     $value = get_option($args['name']);
     // следующая строчка нужна только для использования в мета боксах
     $value = $args['value'];
-    $default = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAMFBMVEXp7vG6vsG3u77s8fTCxsnn7O/f5OfFyczP09bM0dO8wMPk6ezY3eDd4uXR1tnJzdBvAX/cAAACVElEQVR4nO3b23KDIBRA0ShGU0n0//+2KmO94gWZ8Zxmr7fmwWEHJsJUHw8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwO1MHHdn+L3rIoK6eshsNJ8kTaJI07fERPOO1Nc1vgQm2oiBTWJ+d8+CqV1heplLzMRNonED+4mg7L6p591FC+133/xCRNCtd3nL9BlxWP++MOaXFdEXFjZ7r8D9l45C8y6aG0cWtP/SUGhs2d8dA/ZfGgrzYX+TVqcTNRRO9l+fS5eSYzQs85psUcuzk6igcLoHPz2J8gvzWaH/JLS+95RfOD8o1p5CU5R7l5LkfKEp0mQ1UX7hsVXqDpRrifILD/3S9CfmlUQFhQfuFu0STTyJ8gsP3PH7GVxN1FC4t2sbBy4TNRTu7LyHJbqaqKFw+/Q0ncFloo7CjRPwMnCWqKXQZ75El4nKC9dmcJaou9AXOE5UXbi+RGeJygrz8Uf+GewSn9uXuplnWDZJ7d8f24F/s6iq0LYf9olbS3Q8i5oKrRu4S9ybwaQ/aCkqtP3I28QDgeoK7TBya/aXqL5COx67PTCD2grtdOwH+pQV2r0a7YVBgZoKwwIVFQYG6ikMDVRTGByopjD8ATcKb0UhhRTe77sKs2DV7FKSjId18TUEBYVyLhUThWfILHTDqmI85/2RWWjcE/bhP6OD7maT3h20MHsA47JC3PsW0wcwLhv9t0OOPOIkCn21y2bXXwlyylxiYMPk1SuCSmpfK8bNQvIrpAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwNX4BCbAju9/X67UAAAAASUVORK5CYII=';
+    $default = 'http://testwork752.maxjulya.info/wp-content/uploads/woocommerce-placeholder-300x300.png';
 
     if ($value && ($image_attributes = wp_get_attachment_image_src($value, array(150, 110)))) {
         $src = $image_attributes[0];
@@ -203,9 +214,14 @@ function true_image_uploader_field($args)
             <div>
                 <input type="hidden" name="' . $args['name'] . '" id="' . $args['name'] . '" value="' . $value . '" />
                 <button type="submit" class="upload_image_button button">Загрузить</button>
-                <button type="submit" class="remove_image_button button">×</button>
+                <button type="submit" class="remove_image_button button">Удалить</button>
             </div>
 	    </div>';
+
+    // задаем картинку миниатюрой поста
+    $post_id = get_the_ID();
+    $attach_id = $value;
+    set_post_thumbnail( $post_id, $attach_id );
 
 }
 
@@ -229,6 +245,9 @@ function true_print_box_u($post)
     }
 }
 
+
+
+
 //Сохраняем данные произвольного поля
 add_action('save_post', 'true_save_box_data_u');
 function true_save_box_data_u($post_id)
@@ -249,6 +268,7 @@ function art_woo_add_custom_fields()
     global $product, $post;
 
     echo '<div class="options_group" id="textareaInput"> ';
+
 
     woocommerce_wp_text_input(
         array(
@@ -276,8 +296,6 @@ function art_woo_add_custom_fields()
           </p>
           <p class="new_sub_button"></p>
           </div>';
-    $thumbnail_id = (int) get_post_meta( $post->ID, '_thumbnail_id', true );
-    var_dump($thumbnail_id);
 
 
     echo '<script>
@@ -342,6 +360,9 @@ function art_get_text_field_before_add_card()
 }
 
 add_action('woocommerce_before_add_to_cart_form', 'art_get_text_field_before_add_card');
+
+
+
 
 
 
