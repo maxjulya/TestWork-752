@@ -15,11 +15,6 @@
  */
 
 
-function mercury_scripts()
-{
-
-}
-
 function wp8c_register_scripts()
 {
     wp_register_script('wp8c_scripts', plugins_url('assets/js/admin.js', __FILE__));
